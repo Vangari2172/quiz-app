@@ -1,70 +1,87 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const expenseForm = document.getElementById("expense-form");
-  const expenseNameInput = document.getElementById("expense-name");
-  const expenseAmountInput = document.getElementById("expense-amount");
-  const expenseList = document.getElementById("expense-list");
-  const totalAmountDisplay = document.getElementById("total-amount");
+  const startBtn = document.getElementById("start-btn");
+  const nextBtn = document.getElementById("next-btn");
+  const restartBtn = document.getElementById("restart-btn");
+  const questionContainer = document.getElementById("question-container");
+  const questionText = document.getElementById("question-text");
+  const choicesList = document.getElementById("choices-list");
+  const resultContainer = document.getElementById("result-container");
+  const scoreDisplay = document.getElementById("score");
 
-  let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
-  let totalAmount = calculateTotal();
+  const questions = [
+    {
+      question: "What is the capital of France?",
+      choices: ["Paris", "London", "Berlin", "Madrid"],
+      answer: "Paris",
+    },
+    {
+      question: "Which planet is known as the Red Planet?",
+      choices: ["Mars", "Venus", "Jupiter", "Saturn"],
+      answer: "Mars",
+    },
+    {
+      question: "Who wrote 'Hamlet'?",
+      choices: [
+        "Charles Dickens",
+        "Jane Austen",
+        "William Shakespeare",
+        "Mark Twain",
+      ],
+      answer: "William Shakespeare",
+    },
+  ];
 
-  renderExpenses();
+  let currentQuestionIndex = 0;
+  let score = 0;
 
-  expenseForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const name = expenseNameInput.value.trim();
-    const amount = parseFloat(expenseAmountInput.value.trim());
+  startBtn.addEventListener("click", startQuiz);
 
-    if (name !== "" && !isNaN(amount) && amount > 0) {
-      const newExpense = {
-        id: Date.now(),
-        name: name,
-        amount: amount,
-      };
-      expenses.push(newExpense);
-      saveExpensesTolocal();
-      renderExpenses();
-      updateTotal();
-
-      //clear input
-      expenseNameInput.value = "";
-      expenseAmountInput.value = "";
+  nextBtn.addEventListener("click", () => {
+    currentQuestionIndex++;
+    if (currentQuestionIndex < questions.length) {
+      showQuestion();
+    } else {
+      showResult();
     }
   });
 
-  function renderExpenses() {
-    expenseList.innerHTML = "";
-    expenses.forEach((expense) => {
+  restartBtn.addEventListener("click", () => {
+    currentQuestionIndex = 0;
+    score = 0;
+    resultContainer.classList.add("hidden");
+    startQuiz();
+  });
+
+  function startQuiz() {
+    startBtn.classList.add("hidden");
+    resultContainer.classList.add("hidden");
+    questionContainer.classList.remove("hidden");
+    showQuestion();
+  }
+
+  function showQuestion() {
+    nextBtn.classList.add("hidden");
+    questionText.textContent = questions[currentQuestionIndex].question;
+    choicesList.innerHTML = ""; //clear previous choices
+    questions[currentQuestionIndex].choices.forEach((choice) => {
       const li = document.createElement("li");
-      li.innerHTML = `
-        ${expense.name} - $${expense.amount}
-        <button data-id="${expense.id}">Delete</button>
-        `;
-      expenseList.appendChild(li);
+      li.textContent = choice;
+      li.addEventListener("click", () => selectAnswer(choice));
+      choicesList.appendChild(li);
     });
   }
 
-  function calculateTotal() {
-    return expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  }
-
-  function saveExpensesTolocal() {
-    localStorage.setItem("expenses", JSON.stringify(expenses));
-  }
-
-  function updateTotal() {
-    totalAmount = calculateTotal();
-    totalAmountDisplay.textContent = totalAmount.toFixed(2);
-  }
-
-  expenseList.addEventListener("click", (e) => {
-    if (e.target.tagName === "BUTTON") {
-      const expenseId = parseInt(e.target.getAttribute("data-id"));
-      expenses = expenses.filter((expense) => expense.id !== expenseId);
-
-      saveExpensesTolocal();
-      renderExpenses();
-      updateTotal();
+  function selectAnswer(choice) {
+    const correctAnswer = questions[currentQuestionIndex].answer;
+    if (choice === correctAnswer) {
+      score++;
     }
-  });
+    nextBtn.classList.remove("hidden");
+  }
+
+  function showResult() {
+    questionContainer.classList.add("hidden");
+    resultContainer.classList.remove("hidden");
+    scoreDisplay.textContent = `${score} out of ${questions.length}`;
+  }
 });
